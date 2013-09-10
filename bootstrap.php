@@ -1,10 +1,17 @@
 <?php
+/**
+ * 加载优先级：类全名映射->命名空间文件夹查找->纯类名映射->正则匹配前缀类全名映射查找->正则匹配文件夹顺序查找
+ * 
+ */
 global $_ROOTPATH,$_CLASSPATH;
+
+$_ROOTPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
 
 class Layload {
     public static $classes = array('_prefixes'=>array());
     
     public static function initialize() {
+        spl_autoload_register('L::autoload');
     }
     
     public static function classpath($classpath = '') {
@@ -62,27 +69,10 @@ class Layload {
                         require_once $_CLASSPATH.$classes[$name];
                     }
                 }
-                /*if(array_key_exists($name,$classes)) {
-                    if(strpos($classes[$name], $_CLASSPATH) === 0) {
-                        echo 'require_once '.$classes[$name].'<br>';
-                        require_once $classes[$name];
-                    } else if(is_file($_CLASSPATH.$classes[$name])) {
-                        echo 'require_once '.$_CLASSPATH.$classes[$name].'<br>';
-                        require_once $_CLASSPATH.$classes[$name];
-                    }
-                } else {
-                    $path = $_CLASSPATH.'/'.str_replace("\\", "/", $classname);
-                    foreach($suffixes as $i=>$suffix) {
-                        if(is_file($path.$suffix)) {
-                            echo 'require_once '.$path.$suffix.'<br>';
-                            require_once $path.$suffix;
-                            break;
-                        }
-                    }
-                }*/
             } else if(preg_match_all('/([A-Z]{1,}[a-z]{0,}|[a-z]{1,})_{0,1}/', $classname, $matches)) {
                 //$matches[0];$matches[1];
                 $prefix = array_shift(array_values($matches[1]));;
+                //正则匹配前缀查找
                 if(array_key_exists($prefix,$prefixes)) {
                     if(strpos($prefixes[$prefix][$classname], $_CLASSPATH) === 0) {
                         echo 'require_once '.$prefixes[$prefix][$classname].'<br>';
@@ -95,7 +85,7 @@ class Layload {
                     $path = $_CLASSPATH;
                     foreach($matches[1] as $index=>$item) {
                         $path .= '/'.$item;
-                        if(is_dir($path)) {
+                        if(is_dir($path)) {//顺序文件夹查找
                             $tmppath = $path.'/'.substr($classname, strpos($classname, $item) + strlen($item));
                             echo $tmppath.'<br>';
                             foreach($suffixes as $i=>$suffix) {
@@ -136,7 +126,7 @@ class Layload {
         global $_CLASSPATH;
         global $_ROOTPATH;
         $classes = &Layload::$classes;
-        $prefixes = &Layload::$classes['_prefixes'];print_r($prefixDir);print_r($configuration);echo '<br>';
+        $prefixes = &Layload::$classes['_prefixes'];//print_r($prefixDir);print_r($configuration);echo '<br>';
         if(is_array($configuration) && !$isFile) {
             foreach($configuration as $cls=>$path) {
                 if(is_array($prefixDir) && !empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) {
@@ -196,9 +186,4 @@ class Layload {
 }
 
 final class L extends Layload {}//short classname
-
-
-spl_autoload_register('L::autoload');
-L::rootpath();
-L::classpath();
 ?>
