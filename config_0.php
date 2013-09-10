@@ -1,7 +1,7 @@
 <?php
 return array(
     'classes' => array(
-        'Test' => '/test.php'
+        //'core\Test' => '/test.php'
     )
 );
 ?>
