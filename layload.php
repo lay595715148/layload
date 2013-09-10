@@ -1,9 +1,5 @@
 <?php
 /**
- * 加载优先级：类全名映射->命名空间文件夹查找->纯类名映射->正则匹配前缀类全名映射查找->正则匹配文件夹顺序查找
- */
-
-/**
  * @var global rootpath and classpath
  */
 global $_ROOTPATH,$_CLASSPATH;
@@ -15,6 +11,7 @@ $_ROOTPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
 
 /**
  * Layload autoload class
+ * 加载优先级：类全名映射->命名空间文件夹查找->纯类名映射->正则匹配前缀类全名映射查找->正则匹配文件夹顺序查找
  * @author Lay Li
  */
 class Layload {
