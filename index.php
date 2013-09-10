@@ -1,6 +1,6 @@
 <?php
 include_once './bootstrap.php';
-//$layload = new Layload();
+
 L::classpath(__DIR__.'/classes');
 L::configure(array('/config_0.php','/config_1.php','/config_2.php'));
 L::initialize();
