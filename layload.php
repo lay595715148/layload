@@ -16,6 +16,10 @@ $_ROOTPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
  */
 class Layload {
     /**
+     * @staticvar debug
+     */
+    public static $debug = false;
+    /**
      * @staticvar all class mappings
      */
     public static $classes = array('_prefixes'=>array());
@@ -24,8 +28,9 @@ class Layload {
      * initialize autoload function
      * @return void
      */
-    public static function initialize() {
-        spl_autoload_register('L::autoload');
+    public static function initialize($debug = false) {
+        spl_autoload_register('Layload::autoload');
+        Layload::$debug = $debug;
     }
     
     /**
@@ -59,10 +64,10 @@ class Layload {
         $suffixes = array('.php','.class.php','.inc');
         if(array_key_exists($classname, $classes)) {//全名映射
             if(strpos($classes[$classname], $_CLASSPATH) === 0) {
-                echo 'require_once '.$classes[$classname].'<br>';
+                if($debug) echo 'require_once '.$classes[$classname].'<br>';
                 require_once $classes[$classname];
             } else if(is_file($_CLASSPATH.$classes[$classname])) {
-                echo 'require_once '.$_CLASSPATH.$classes[$classname].'<br>';
+                if($debug) echo 'require_once '.$_CLASSPATH.$classes[$classname].'<br>';
                 require_once $_CLASSPATH.$classes[$classname];
             } else {
                 //TODO mapping is error
@@ -78,24 +83,24 @@ class Layload {
                     $tmppath = $path.'/'.$name;
                     foreach($suffixes as $i=>$suffix) {
                         if(is_file($tmppath.$suffix)) {
-                            echo 'require_once '.$tmppath.$suffix.'<br>';
+                            if($debug) echo 'require_once '.$tmppath.$suffix.'<br>';
                             require_once $tmppath.$suffix;
                             $required = true;
                             break;
                         }
                     }
-                }
+                /*}
                 //纯类名映射
                 if(!$unrequired && array_key_exists($name,$classes)) {
                     if(strpos($classes[$name], $_CLASSPATH) === 0) {
-                        echo 'require_once '.$classes[$name].'<br>';
+                        if($debug) echo 'require_once '.$classes[$name].'<br>';
                         require_once $classes[$name];
                     } else if(is_file($_CLASSPATH.$classes[$name])) {
-                        echo 'require_once '.$_CLASSPATH.$classes[$name].'<br>';
+                        if($debug) echo 'require_once '.$_CLASSPATH.$classes[$name].'<br>';
                         require_once $_CLASSPATH.$classes[$name];
                     } else {
                         //TODO mapping is error
-                    }
+                    }*/
                 } else {
                     //TODO not found by namespace dir or not found by class basename
                 }
@@ -105,10 +110,10 @@ class Layload {
                 //正则匹配前缀查找
                 if(array_key_exists($prefix,$prefixes)) {
                     if(strpos($prefixes[$prefix][$classname], $_CLASSPATH) === 0) {
-                        echo 'require_once '.$prefixes[$prefix][$classname].'<br>';
+                        if($debug) echo 'require_once '.$prefixes[$prefix][$classname].'<br>';
                         require_once $prefixes[$prefix][$classname];
                     } else if(is_file($_CLASSPATH.$prefixes[$prefix][$classname])) {
-                        echo 'require_once '.$_CLASSPATH.$prefixes[$prefix][$classname].'<br>';
+                        if($debug) echo 'require_once '.$_CLASSPATH.$prefixes[$prefix][$classname].'<br>';
                         require_once $_CLASSPATH.$prefixes[$prefix][$classname];
                     } else {
                         //TODO mapping is error by regular match
@@ -122,7 +127,7 @@ class Layload {
                             echo $tmppath.'<br>';
                             foreach($suffixes as $i=>$suffix) {
                                 if(is_file($tmppath.$suffix)) {
-                                    echo 'require_once '.$tmppath.$suffix.'<br>';
+                                    if($debug) echo 'require_once '.$tmppath.$suffix.'<br>';
                                     require_once $tmppath.$suffix;
                                     break 2;
                                 }
@@ -131,7 +136,7 @@ class Layload {
                         } else if($index == count($matches[1]) - 1) {
                             foreach($suffixes as $i=>$suffix) {
                                 if(is_file($path.$suffix)) {
-                                    echo 'require_once '.$path.$suffix.'<br>';
+                                    if($debug) echo 'require_once '.$path.$suffix.'<br>';
                                     require_once $path.$suffix;
                                     break 2;
                                 }
@@ -156,7 +161,7 @@ class Layload {
         global $_CLASSPATH;
         global $_ROOTPATH;
         $classes = &Layload::$classes;
-        $prefixes = &Layload::$classes['_prefixes'];//print_r($prefixDir);print_r($configuration);echo '<br>';
+        $prefixes = &Layload::$classes['_prefixes'];
         if(is_array($configuration) && !$isFile) {
             foreach($configuration as $cls=>$path) {
                 if(is_array($prefixDir) && !empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) {
@@ -182,7 +187,7 @@ class Layload {
         } else {
             if(strpos($configuration, $_ROOTPATH) === 0) {
                 $tmparr = include_once $configuration;
-            } else if(file_exists($_ROOTPATH.$configuration)) {
+            } else if(is_file($_ROOTPATH.$configuration)) {
                 $tmparr = include_once $_ROOTPATH.$configuration;
             } else {
                 $tmparr = array();
