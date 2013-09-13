@@ -1,13 +1,13 @@
 <?php
 /**
- * @var global rootpath and classpath
+ * @var global loadpath and classpath
  */
-global $_ROOTPATH,$_CLASSPATH;
+global $_LOADPATH,$_CLASSPATH;
 
 /**
- * default rootpath and classpath
+ * default loadpath and classpath
  */
-$_ROOTPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
+$_LOADPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
 
 /**
  * Layload autoload class
@@ -43,13 +43,13 @@ class Layload {
         $_CLASSPATH = str_replace("\\", "/", is_dir($classpath)?$classpath:$_CLASSPATH);
     }
     /**
-     * set root path
-     * @param $rootpath web root directory path,default is empty
+     * set load path
+     * @param $loadpath class mapping config load directory path,default is empty
      * @return void
      */
-    public static function rootpath($rootpath = '') {
-        global $_ROOTPATH;
-        $_ROOTPATH = str_replace("\\", "/", is_dir($rootpath)?$rootpath:$_ROOTPATH);
+    public static function loadpath($loadpath = '') {
+        global $_LOADPATH;
+        $_LOADPATH = str_replace("\\", "/", is_dir($loadpath)?$loadpath:$_LOADPATH);
     }
     
     /**
@@ -161,7 +161,7 @@ class Layload {
      */
     public static function configure($configuration, $isFile = true, $prefixDir = array()) {
         global $_CLASSPATH;
-        global $_ROOTPATH;
+        global $_LOADPATH;
         $classes = &Layload::$classes;
         $prefixes = &Layload::$classes['_prefixes'];
         if(is_array($configuration) && !$isFile) {
@@ -183,14 +183,16 @@ class Layload {
                 }
             }
         } else if(is_array($configuration)) {
-            foreach($configuration as $index=>$configfile) {
-                Layload::configure($configfile);
+            if(!empty($configuration)) {
+                foreach($configuration as $index=>$configfile) {
+                    Layload::configure($configfile);
+                }
             }
         } else {
-            if(strpos($configuration, $_ROOTPATH) === 0) {
+            if(is_file($configuration)) {
                 $tmparr = include_once $configuration;
-            } else if(is_file($_ROOTPATH.$configuration)) {
-                $tmparr = include_once $_ROOTPATH.$configuration;
+            } else if(is_file($_LOADPATH.$configuration)) {
+                $tmparr = include_once $_LOADPATH.$configuration;
             } else {
                 $tmparr = array();
             }
