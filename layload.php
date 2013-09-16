@@ -14,7 +14,7 @@ $_LOADPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
  * 加载优先级：类全名映射->命名空间文件夹查找->纯类名映射->正则匹配前缀类全名映射查找->正则匹配文件夹顺序查找
  * @author Lay Li
  */
-class Layload {
+final class Layload {
     /**
      * @staticvar debug
      */
@@ -216,5 +216,6 @@ class Layload {
  * Layload autoload class
  * @author Lay Li
  */
-final class L extends Layload {}//short classname
+//final class L extends Layload {}//short classname
+class_alias('Layload', 'L');//Layload class alias
 ?>
