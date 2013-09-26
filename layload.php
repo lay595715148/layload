@@ -104,9 +104,10 @@ final class Layload {
                 } else {
                     //TODO not found by namespace dir or not found by class basename
                 }
-            } else if(preg_match_all('/([A-Z]{1,}[a-z0-9]{0,}|[a-z0-9]{1,})_{0,1}/', $classname, $matches)) {
+            } else if(preg_match_all('/([A-Z]{1,}[a-z0-9]{0,}|[a-z0-9]{1,})_{0,1}/', $classname, $matches) > 0) {
                 //TODO autoload class by regular
-                $prefix = array_shift(array_values($matches[1]));;
+                $tmparr = array_values($matches[1]);
+                $prefix = array_shift($tmparr);
                 //正则匹配前缀查找
                 if(array_key_exists($prefix,$prefixes)) {
                     if(is_file($prefixes[$prefix][$classname])) {
