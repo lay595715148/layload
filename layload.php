@@ -30,7 +30,7 @@ final class Layload {
      */
     public static function initialize($debug = false) {
         spl_autoload_register('Layload::autoload');
-        Layload::$debug = $debug;
+        Layload::$debug = $debug === true;
     }
     
     /**
@@ -121,31 +121,46 @@ final class Layload {
                     }
                 } else {
                     $path = $_CLASSPATH;
-                    foreach($matches[1] as $index=>$item) {
-                        $path .= '/'.$item;
-                        if(is_dir($path)) {//顺序文件夹查找
-                            $tmppath = $path.'/'.substr($classname, strpos($classname, $item) + strlen($item));
-                            echo $tmppath.'<br>';
-                            foreach($suffixes as $i=>$suffix) {
-                                if(is_file($tmppath.$suffix)) {
-                                    if(Layload::$debug) echo 'require_once '.$tmppath.$suffix.'<br>';
-                                    require_once $tmppath.$suffix;
-                                    break 2;
-                                }
-                            }
-                            continue;
-                        } else if($index == count($matches[1]) - 1) {
-                            foreach($suffixes as $i=>$suffix) {
-                                if(is_file($path.$suffix)) {
-                                    if(Layload::$debug) echo 'require_once '.$path.$suffix.'<br>';
-                                    require_once $path.$suffix;
-                                    break 2;
-                                }
-                            }
-                            break;
+                    //直接以类名作为文件名查找
+                    foreach($suffixes as $i=>$suffix) {
+                        $tmppath = $path.'/'.$classname;
+                        if(is_file($tmppath.$suffix)) {
+                            if(Layload::$debug) echo 'require_once '.$tmppath.$suffix.'<br>';
+                            require_once $tmppath.$suffix;
                         } else {
-                            //TODO not found by regular match
+                            //TODO not found by classname directly
                         }
+                    }
+                    //如果以上没有匹配，则递归文件夹查找
+                    if(!class_exists($classname) && !interface_exists($classname)) {
+                        foreach($matches[1] as $index=>$item) {
+                            $path .= '/'.$item;
+                            if(is_dir($path)) {//顺序文件夹查找
+                                $tmppath = $path.'/'.substr($classname, strpos($classname, $item) + strlen($item));
+                                foreach($suffixes as $i=>$suffix) {
+                                    if(is_file($tmppath.$suffix)) {
+                                        if(Layload::$debug) echo 'require_once '.$tmppath.$suffix.'<br>';
+                                        require_once $tmppath.$suffix;
+                                        break 2;
+                                    }
+                                }
+                                continue;
+                            } else if($index == count($matches[1]) - 1) {
+                                foreach($suffixes as $i=>$suffix) {
+                                    if(is_file($path.$suffix)) {
+                                        if(Layload::$debug) echo 'require_once '.$path.$suffix.'<br>';
+                                        require_once $path.$suffix;
+                                        break 2;
+                                    }
+                                }
+                                break;
+                            } else {
+                                //TODO not found by regular recursive
+                            }
+                        }
+                    }
+                    if(!class_exists($classname) && !interface_exists($classname)) {
+                        //TODO warning no class mapping by layload class autoload function
                     }
                 }
             } else {
