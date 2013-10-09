@@ -40,7 +40,11 @@ final class Layload {
      */
     public static function classpath($classpath = '') {
         global $_CLASSPATH;
-        $_CLASSPATH = str_replace("\\", "/", is_dir($classpath)?$classpath:$_CLASSPATH);
+        if(is_dir($classpath)) {
+            $_CLASSPATH = str_replace("\\", "/", $classpath);
+        } else {
+            //TODO warning given path isnot a real path
+        }
     }
     /**
      * set load path
@@ -49,7 +53,11 @@ final class Layload {
      */
     public static function loadpath($loadpath = '') {
         global $_LOADPATH;
-        $_LOADPATH = str_replace("\\", "/", is_dir($loadpath)?$loadpath:$_LOADPATH);
+        if(is_dir($loadpath)) {
+            $_LOADPATH = str_replace("\\", "/", $loadpath);
+        } else {
+            //TODO warning given path isnot a real path
+        }
     }
     
     /**
