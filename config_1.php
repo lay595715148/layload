@@ -1,9 +1,9 @@
 <?php
 return array(
-    'classes' => array(
-        'ServiceMysql' => '/ServiceMysql.php'
-    ),
     'prefix-dir' => array(
+        /*'classes' => array(
+            'ServiceMysql' => '/ServiceMysql.php'
+        ),*/
         'prefix' => 'Service',
         'dir' => '/example/service'
     )

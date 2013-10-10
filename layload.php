@@ -70,7 +70,8 @@ final class Layload {
         $classes = &Layload::$classes;
         $prefixes = &Layload::$classes['_prefixes'];
         $suffixes = array('.php','.class.php','.inc');
-        if(array_key_exists($classname, $classes)) {//全名映射
+        //全名映射查找
+        if(array_key_exists($classname, $classes)) {
             if(is_file($classes[$classname])) {
                 if(Layload::$debug) {
                     Debugger::info($classes[$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
@@ -84,9 +85,12 @@ final class Layload {
             } else {
                 //TODO mapping is error
             }
-        } else {
+        }
+        if(!class_exists($classname) && !interface_exists($classname)) {
             $tmparr = explode("\\",$classname);
-            if(count($tmparr) > 1) {//if is namespace
+            //if is namespace
+            //通过命名空间查找
+            if(count($tmparr) > 1) {
                 $name = array_pop($tmparr);
                 $path = $_CLASSPATH.'/'.implode('/', $tmparr);
                 $required = false;
@@ -103,27 +107,16 @@ final class Layload {
                             break;
                         }
                     }
-                /*}
-                //纯类名映射
-                if(!$unrequired && array_key_exists($name,$classes)) {
-                    if(is_file($classes[$name])) {
-                        if(Layload::$debug) echo 'require_once '.$classes[$name].'<br>';
-                        require_once $classes[$name];
-                    } else if(is_file($_CLASSPATH.$classes[$name])) {
-                        if(Layload::$debug) echo 'require_once '.$_CLASSPATH.$classes[$name].'<br>';
-                        require_once $_CLASSPATH.$classes[$name];
-                    } else {
-                        //TODO mapping is error
-                    }*/
                 } else {
                     //TODO not found by namespace dir or not found by class basename
                 }
-            } else if(preg_match_all('/([A-Z]{1,}[a-z0-9]{0,}|[a-z0-9]{1,})_{0,1}/', $classname, $matches) > 0) {
+            }
+            if(!class_exists($classname) && !interface_exists($classname) && preg_match_all('/([A-Z]{1,}[a-z0-9]{0,}|[a-z0-9]{1,})_{0,1}/', $classname, $matches) > 0) {
                 //TODO autoload class by regular
                 $tmparr = array_values($matches[1]);
                 $prefix = array_shift($tmparr);
                 //正则匹配前缀查找
-                if(array_key_exists($prefix,$prefixes)) {
+                if(array_key_exists($prefix, $prefixes)) {//prefix is not good
                     if(is_file($prefixes[$prefix][$classname])) {
                         if(Layload::$debug) {
                             Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
@@ -135,57 +128,81 @@ final class Layload {
                         }
                         require_once $_CLASSPATH.$prefixes[$prefix][$classname];
                     } else {
-                        //TODO mapping is error by regular match
+                        foreach($suffixes as $i=>$suffix) {
+                            $tmppath = $prefixes[$prefix]['_dir'].'/'.$classname;
+                            if(is_file($tmppath.$suffix)) {
+                                if(Layload::$debug) {
+                                    Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                }
+                                require_once $tmppath.$suffix;
+                                break;
+                            } else if($_CLASSPATH.$tmppath.$suffix) {
+                                if(Layload::$debug) {
+                                    Debugger::info($_CLASSPATH.$tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                }
+                                require_once $_CLASSPATH.$tmppath.$suffix;
+                                break;
+                            } else {
+                                //TODO not found by  prefix-dir directly
+                            }
+                        }
+                        if(!class_exists($classname) && !interface_exists($classname)) {
+                            //TODO mapping is error by regular match
+                        }
                     }
-                } else {
-                    $path = $_CLASSPATH;
+                }
+                //如果正则匹配前缀没有找到
+                if(!class_exists($classname) && !interface_exists($classname)) {
                     //直接以类名作为文件名查找
                     foreach($suffixes as $i=>$suffix) {
-                        $tmppath = $path.'/'.$classname;
+                        $tmppath = $_CLASSPATH.'/'.$classname;
                         if(is_file($tmppath.$suffix)) {
                             if(Layload::$debug) {
                                 Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
                             }
                             require_once $tmppath.$suffix;
+                            break;
                         } else {
                             //TODO not found by classname directly
                         }
                     }
-                    //如果以上没有匹配，则递归文件夹查找
-                    if(!class_exists($classname) && !interface_exists($classname)) {
-                        foreach($matches[1] as $index=>$item) {
-                            $path .= '/'.$item;
-                            if(is_dir($path)) {//顺序文件夹查找
-                                $tmppath = $path.'/'.substr($classname, strpos($classname, $item) + strlen($item));
-                                foreach($suffixes as $i=>$suffix) {
-                                    if(is_file($tmppath.$suffix)) {
-                                        if(Layload::$debug) {
-                                            Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
-                                        }
-                                        require_once $tmppath.$suffix;
-                                        break 2;
+                }
+                //如果以上没有匹配，则递归文件夹查找
+                if(!class_exists($classname) && !interface_exists($classname)) {
+                    $path = $_CLASSPATH;
+                    foreach($matches[1] as $index=>$item) {
+                        $path .= '/'.$item;
+                        if(is_dir($path)) {//顺序文件夹查找
+                            $tmppath = $path.'/'.substr($classname, strpos($classname, $item) + strlen($item));
+                            foreach($suffixes as $i=>$suffix) {
+                                if(is_file($tmppath.$suffix)) {
+                                    if(Layload::$debug) {
+                                        Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
                                     }
+                                    require_once $tmppath.$suffix;
+                                    break 2;
                                 }
-                                continue;
-                            } else if($index == count($matches[1]) - 1) {
-                                foreach($suffixes as $i=>$suffix) {
-                                    if(is_file($path.$suffix)) {
-                                        if(Layload::$debug) {
-                                            Debugger::info($path.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
-                                        }
-                                        require_once $path.$suffix;
-                                        break 2;
-                                    }
-                                }
-                                break;
-                            } else {
-                                //TODO not found by regular recursive
                             }
+                            continue;
+                        } else if($index == count($matches[1]) - 1) {
+                            foreach($suffixes as $i=>$suffix) {
+                                if(is_file($path.$suffix)) {
+                                    if(Layload::$debug) {
+                                        Debugger::info($path.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                    }
+                                    require_once $path.$suffix;
+                                    break 2;
+                                }
+                            }
+                            break;
+                        } else {
+                            //TODO not found by regular recursive
                         }
                     }
-                    if(!class_exists($classname) && !interface_exists($classname)) {
-                        //TODO warning no class mapping by layload class autoload function
-                    }
+                }
+                if(!class_exists($classname) && !interface_exists($classname)) {
+                    //TODO warning no class mapping by layload class autoload function
+                    Debugger::warn($classname.':no class mapping by layload class autoload function', 'CLASS_AUTOLOAD', __LINE__, __METHOD__, __CLASS__);
                 }
             } else {
                 //TODO not found
@@ -237,10 +254,22 @@ final class Layload {
                 $tmparr = array();
             }
             
-            if(array_key_exists('classes',$tmparr)) {
-                Layload::configure($tmparr['classes'], false, isset($tmparr['prefix-dir'])?$tmparr['prefix-dir']:'');
+            if(array_key_exists('classes', $tmparr)) {
+                Layload::configure($tmparr['classes'], false);
             } else {
                 //TODO no class mapping
+            }
+            //正则匹配前缀
+            if(array_key_exists('prefix-dir', $tmparr)) {
+                if($tmparr['prefix-dir']['prefix'] && $tmparr['prefix-dir']['dir']) {
+                    $prefix = $tmparr['prefix-dir']['prefix'];
+                    $prefixes[$prefix]['_dir'] = $tmparr['prefix-dir']['dir'];
+                }
+                if(array_key_exists('classes', $tmparr['prefix-dir'])) {
+                    Layload::configure($tmparr['prefix-dir']['classes'], false, $tmparr['prefix-dir']);
+                }
+            } else {
+                //TODO no prefix-dir or class mapping
             }
             if(array_key_exists('files',$tmparr)) {
                 Layload::configure($tmparr['files']);
