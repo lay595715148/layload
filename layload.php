@@ -281,9 +281,11 @@ final class Layload {
     }
 }
 
-/**
- * Layload autoload class
- * @author Lay Li
- */
-class_alias('Layload', 'L');//Layload class alias
+if(!class_exists('L', false)) {
+    /**
+     * Layload autoload class
+     * @author Lay Li
+     */
+    class_alias('Layload', 'L');
+}
 ?>
