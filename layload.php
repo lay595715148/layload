@@ -38,11 +38,29 @@ final class Layload {
      * @param $classpath class directory path,default is empty
      * @return void
      */
-    public static function classpath($classpath = '') {
+    public static function classpath($classpath = '', $append = true) {
         global $_CLASSPATH;
         if(is_dir($classpath)) {
-            $_CLASSPATH = str_replace("\\", "/", $classpath);
+            $classpath = str_replace("\\", "/", $classpath);
+            if(!$append || !$_CLASSPATH) {
+                $_CLASSPATH = $classpath;
+            } else {
+                $paths = explode(';', $_CLASSPATH);
+                array_push($paths, $classpath);
+                $paths = array_flip(array_flip($paths));
+                $_CLASSPATH = implode(';', $paths);
+            }
+        } else if(is_string($classpath) && $classpath){
+            $paths = explode(';', $classpath);
+            foreach($paths as $path) {
+                Layload::classpath($path, $append);
+            }
+        } else if(is_array($classpath) && !empty($classpath)) {
+            foreach($classpath as $path) {
+                Layload::classpath($path, $append);
+            }
         } else {
+            Debugger::warn('$classpath isnot a real path string', 'CLASSPATH', __LINE__, __METHOD__, __CLASS__);
             //TODO warning given path isnot a real path
         }
     }
@@ -67,6 +85,20 @@ final class Layload {
      */
     public static function autoload($classname) {
         global $_CLASSPATH;
+        $paths = explode(';', $_CLASSPATH);
+        if(empty($paths)) {
+            //TODO warning no class autoload path
+        } else {
+            foreach($paths as $path) {
+                if(class_exists($classname) || interface_exists($classname)) {
+                    break;
+                } else {
+                    Layload::autoloadPerPath($classname, $path);
+                }
+            }
+        }
+    }
+    private static function autoloadPerPath($classname, $classpath) {
         $classes = &Layload::$classes;
         $prefixes = &Layload::$classes['_prefixes'];
         $suffixes = array('.php','.class.php','.inc');
@@ -77,11 +109,11 @@ final class Layload {
                     Debugger::info($classes[$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
                 }
                 require_once $classes[$classname];
-            } else if(is_file($_CLASSPATH.$classes[$classname])) {
+            } else if(is_file($classpath.$classes[$classname])) {
                 if(Layload::$debug) {
-                    Debugger::info($_CLASSPATH.$classes[$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                    Debugger::info($classpath.$classes[$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
                 }
-                require_once $_CLASSPATH.$classes[$classname];
+                require_once $classpath.$classes[$classname];
             } else {
                 //TODO mapping is error
             }
@@ -92,7 +124,7 @@ final class Layload {
             //通过命名空间查找
             if(count($tmparr) > 1) {
                 $name = array_pop($tmparr);
-                $path = $_CLASSPATH.'/'.implode('/', $tmparr);
+                $path = $classpath.'/'.implode('/', $tmparr);
                 $required = false;
                 //命名空间文件夹查找
                 if(is_dir($path)) {
@@ -122,11 +154,11 @@ final class Layload {
                             Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
                         }
                         require_once $prefixes[$prefix][$classname];
-                    } else if(is_file($_CLASSPATH.$prefixes[$prefix][$classname])) {
+                    } else if(is_file($classpath.$prefixes[$prefix][$classname])) {
                         if(Layload::$debug) {
-                            Debugger::info($_CLASSPATH.$prefixes[$prefix][$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                            Debugger::info($classpath.$prefixes[$prefix][$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
                         }
-                        require_once $_CLASSPATH.$prefixes[$prefix][$classname];
+                        require_once $classpath.$prefixes[$prefix][$classname];
                     } else {
                         foreach($suffixes as $i=>$suffix) {
                             $tmppath = $prefixes[$prefix]['_dir'].'/'.$classname;
@@ -136,11 +168,11 @@ final class Layload {
                                 }
                                 require_once $tmppath.$suffix;
                                 break;
-                            } else if($_CLASSPATH.$tmppath.$suffix) {
+                            } else if($classpath.$tmppath.$suffix) {
                                 if(Layload::$debug) {
-                                    Debugger::info($_CLASSPATH.$tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                    Debugger::info($classpath.$tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
                                 }
-                                require_once $_CLASSPATH.$tmppath.$suffix;
+                                require_once $classpath.$tmppath.$suffix;
                                 break;
                             } else {
                                 //TODO not found by  prefix-dir directly
@@ -155,7 +187,7 @@ final class Layload {
                 if(!class_exists($classname) && !interface_exists($classname)) {
                     //直接以类名作为文件名查找
                     foreach($suffixes as $i=>$suffix) {
-                        $tmppath = $_CLASSPATH.'/'.$classname;
+                        $tmppath = $classpath.'/'.$classname;
                         if(is_file($tmppath.$suffix)) {
                             if(Layload::$debug) {
                                 Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
@@ -169,7 +201,7 @@ final class Layload {
                 }
                 //如果以上没有匹配，则递归文件夹查找
                 if(!class_exists($classname) && !interface_exists($classname)) {
-                    $path = $_CLASSPATH;
+                    $path = $classpath;
                     foreach($matches[1] as $index=>$item) {
                         $path .= '/'.$item;
                         if(is_dir($path)) {//顺序文件夹查找
