@@ -60,7 +60,7 @@ final class Layload {
                 Layload::classpath($path, $append);
             }
         } else {
-            Debugger::warn('$classpath isnot a real path string', 'CLASSPATH', __LINE__, __METHOD__, __CLASS__);
+            Debugger::warn('$classpath isnot a real path string', 'CLASSPATH');
             //TODO warning given path isnot a real path
         }
     }
@@ -96,22 +96,26 @@ final class Layload {
                     Layload::autoloadPerPath($classname, $path);
                 }
             }
+            if(!class_exists($classname) && !interface_exists($classname)) {
+                //TODO warning no class mapping by layload class autoload function
+                Debugger::warn($classname.':no class mapping by layload class autoload function', 'CLASS_AUTOLOAD');
+            }
         }
     }
     private static function autoloadPerPath($classname, $classpath) {
         $classes = &Layload::$classes;
         $prefixes = &Layload::$classes['_prefixes'];
-        $suffixes = array('.php','.class.php','.inc');
+        $suffixes = array('.php', '.class.php');
         //全名映射查找
         if(array_key_exists($classname, $classes)) {
             if(is_file($classes[$classname])) {
                 if(Layload::$debug) {
-                    Debugger::info($classes[$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                    Debugger::info($classes[$classname], 'REQUIRE_ONCE');
                 }
                 require_once $classes[$classname];
             } else if(is_file($classpath.$classes[$classname])) {
                 if(Layload::$debug) {
-                    Debugger::info($classpath.$classes[$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                    Debugger::info($classpath.$classes[$classname], 'REQUIRE_ONCE');
                 }
                 require_once $classpath.$classes[$classname];
             } else {
@@ -132,7 +136,7 @@ final class Layload {
                     foreach($suffixes as $i=>$suffix) {
                         if(is_file($tmppath.$suffix)) {
                             if(Layload::$debug) {
-                                Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                             }
                             require_once $tmppath.$suffix;
                             $required = true;
@@ -151,12 +155,12 @@ final class Layload {
                 if(array_key_exists($prefix, $prefixes)) {//prefix is not good
                     if(is_file($prefixes[$prefix][$classname])) {
                         if(Layload::$debug) {
-                            Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                            Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE');
                         }
                         require_once $prefixes[$prefix][$classname];
                     } else if(is_file($classpath.$prefixes[$prefix][$classname])) {
                         if(Layload::$debug) {
-                            Debugger::info($classpath.$prefixes[$prefix][$classname], 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                            Debugger::info($classpath.$prefixes[$prefix][$classname], 'REQUIRE_ONCE');
                         }
                         require_once $classpath.$prefixes[$prefix][$classname];
                     } else {
@@ -164,13 +168,13 @@ final class Layload {
                             $tmppath = $prefixes[$prefix]['_dir'].'/'.$classname;
                             if(is_file($tmppath.$suffix)) {
                                 if(Layload::$debug) {
-                                    Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                    Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                                 }
                                 require_once $tmppath.$suffix;
                                 break;
                             } else if($classpath.$tmppath.$suffix) {
                                 if(Layload::$debug) {
-                                    Debugger::info($classpath.$tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                    Debugger::info($classpath.$tmppath.$suffix, 'REQUIRE_ONCE');
                                 }
                                 require_once $classpath.$tmppath.$suffix;
                                 break;
@@ -190,7 +194,7 @@ final class Layload {
                         $tmppath = $classpath.'/'.$classname;
                         if(is_file($tmppath.$suffix)) {
                             if(Layload::$debug) {
-                                Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                             }
                             require_once $tmppath.$suffix;
                             break;
@@ -209,7 +213,7 @@ final class Layload {
                             foreach($suffixes as $i=>$suffix) {
                                 if(is_file($tmppath.$suffix)) {
                                     if(Layload::$debug) {
-                                        Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                        Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                                     }
                                     require_once $tmppath.$suffix;
                                     break 2;
@@ -220,7 +224,7 @@ final class Layload {
                             foreach($suffixes as $i=>$suffix) {
                                 if(is_file($path.$suffix)) {
                                     if(Layload::$debug) {
-                                        Debugger::info($path.$suffix, 'REQUIRE_ONCE', __LINE__, __METHOD__, __CLASS__);
+                                        Debugger::info($path.$suffix, 'REQUIRE_ONCE');
                                     }
                                     require_once $path.$suffix;
                                     break 2;
@@ -231,10 +235,6 @@ final class Layload {
                             //TODO not found by regular recursive
                         }
                     }
-                }
-                if(!class_exists($classname) && !interface_exists($classname)) {
-                    //TODO warning no class mapping by layload class autoload function
-                    Debugger::warn($classname.':no class mapping by layload class autoload function', 'CLASS_AUTOLOAD', __LINE__, __METHOD__, __CLASS__);
                 }
             } else {
                 //TODO not found
