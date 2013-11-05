@@ -7,7 +7,8 @@ global $_LOADPATH,$_CLASSPATH;
 /**
  * default loadpath and classpath
  */
-$_LOADPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
+$_LOADPATH  = str_replace("\\", "/", __DIR__);
+$_CLASSPATH = str_replace("\\", "/", __DIR__);
 
 /**
  * Layload autoload class
@@ -16,26 +17,25 @@ $_LOADPATH = $_CLASSPATH = str_replace("\\", "/", __DIR__);
  */
 final class Layload {
     /**
-     * @staticvar debug
-     */
-    public static $debug = false;
-    /**
      * @staticvar all class mappings
      */
     public static $classes = array('_prefixes'=>array());
     
     /**
      * initialize autoload function
+     * @param boolean $debug debug opened
      * @return void
      */
-    public static function initialize($debug = false) {
+    public static function initialize($debug = '') {
         spl_autoload_register('Layload::autoload');
-        Layload::$debug = $debug === true;
+        if($debug !== '') Debugger::initialize($debug);
+        Debugger::info('initilize layload', 'APPLICATION');
     }
     
     /**
      * set class path
-     * @param $classpath class directory path,default is empty
+     * @param string $classpath class directory path,default is empty
+     * @param boolean $append is append
      * @return void
      */
     public static function classpath($classpath = '', $append = true) {
@@ -66,7 +66,7 @@ final class Layload {
     }
     /**
      * set load path
-     * @param $loadpath class mapping config load directory path,default is empty
+     * @param string $loadpath class mapping config load directory path,default is empty
      * @return void
      */
     public static function loadpath($loadpath = '') {
@@ -80,7 +80,7 @@ final class Layload {
     
     /**
      * class autoload function
-     * @param $classname autoload class name
+     * @param string $classname autoload class name
      * @return void
      */
     public static function autoload($classname) {
@@ -102,6 +102,12 @@ final class Layload {
             }
         }
     }
+    /**
+     * autoload class by classpath
+     * @param string $classname
+     * @param string $classpath
+     * @return void
+     */
     private static function autoloadPerPath($classname, $classpath) {
         $classes = &Layload::$classes;
         $prefixes = &Layload::$classes['_prefixes'];
@@ -109,14 +115,10 @@ final class Layload {
         //全名映射查找
         if(array_key_exists($classname, $classes)) {
             if(is_file($classes[$classname])) {
-                if(Layload::$debug) {
-                    Debugger::info($classes[$classname], 'REQUIRE_ONCE');
-                }
+                Debugger::info($classes[$classname], 'REQUIRE_ONCE');
                 require_once $classes[$classname];
             } else if(is_file($classpath.$classes[$classname])) {
-                if(Layload::$debug) {
-                    Debugger::info($classpath.$classes[$classname], 'REQUIRE_ONCE');
-                }
+                Debugger::info($classpath.$classes[$classname], 'REQUIRE_ONCE');
                 require_once $classpath.$classes[$classname];
             } else {
                 //TODO mapping is error
@@ -135,9 +137,7 @@ final class Layload {
                     $tmppath = $path.'/'.$name;
                     foreach($suffixes as $i=>$suffix) {
                         if(is_file($tmppath.$suffix)) {
-                            if(Layload::$debug) {
-                                Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
-                            }
+                            Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                             require_once $tmppath.$suffix;
                             $required = true;
                             break;
@@ -154,28 +154,20 @@ final class Layload {
                 //正则匹配前缀查找
                 if(array_key_exists($prefix, $prefixes)) {//prefix is not good
                     if(is_file($prefixes[$prefix][$classname])) {
-                        if(Layload::$debug) {
-                            Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE');
-                        }
+                        Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE');
                         require_once $prefixes[$prefix][$classname];
                     } else if(is_file($classpath.$prefixes[$prefix][$classname])) {
-                        if(Layload::$debug) {
-                            Debugger::info($classpath.$prefixes[$prefix][$classname], 'REQUIRE_ONCE');
-                        }
+                        Debugger::info($classpath.$prefixes[$prefix][$classname], 'REQUIRE_ONCE');
                         require_once $classpath.$prefixes[$prefix][$classname];
                     } else {
                         foreach($suffixes as $i=>$suffix) {
                             $tmppath = $prefixes[$prefix]['_dir'].'/'.$classname;
                             if(is_file($tmppath.$suffix)) {
-                                if(Layload::$debug) {
-                                    Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
-                                }
+                                Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                                 require_once $tmppath.$suffix;
                                 break;
                             } else if($classpath.$tmppath.$suffix) {
-                                if(Layload::$debug) {
-                                    Debugger::info($classpath.$tmppath.$suffix, 'REQUIRE_ONCE');
-                                }
+                                Debugger::info($classpath.$tmppath.$suffix, 'REQUIRE_ONCE');
                                 require_once $classpath.$tmppath.$suffix;
                                 break;
                             } else {
@@ -193,9 +185,7 @@ final class Layload {
                     foreach($suffixes as $i=>$suffix) {
                         $tmppath = $classpath.'/'.$classname;
                         if(is_file($tmppath.$suffix)) {
-                            if(Layload::$debug) {
-                                Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
-                            }
+                            Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                             require_once $tmppath.$suffix;
                             break;
                         } else {
@@ -212,9 +202,7 @@ final class Layload {
                             $tmppath = $path.'/'.substr($classname, strpos($classname, $item) + strlen($item));
                             foreach($suffixes as $i=>$suffix) {
                                 if(is_file($tmppath.$suffix)) {
-                                    if(Layload::$debug) {
-                                        Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
-                                    }
+                                    Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                                     require_once $tmppath.$suffix;
                                     break 2;
                                 }
@@ -223,9 +211,7 @@ final class Layload {
                         } else if($index == count($matches[1]) - 1) {
                             foreach($suffixes as $i=>$suffix) {
                                 if(is_file($path.$suffix)) {
-                                    if(Layload::$debug) {
-                                        Debugger::info($path.$suffix, 'REQUIRE_ONCE');
-                                    }
+                                    Debugger::info($path.$suffix, 'REQUIRE_ONCE');
                                     require_once $path.$suffix;
                                     break 2;
                                 }
@@ -243,9 +229,9 @@ final class Layload {
     }
     /**
      * configure class mapping,all config file is load in $_LOADPATH
-     * @param $configuration a class mapping file or class mapping file array or class mapping array
-     * @param $isFile sign file,default is true
-     * @param $prefixDir class prefix to dir,default is empty,example: array('prefix'=>'Example','dir'=>'/example')
+     * @param string|array<string> $configuration a class mapping file or class mapping file array or class mapping array
+     * @param boolean $isFile sign file,default is true
+     * @param array $prefixDir class prefix to dir,default is empty,example: array('prefix'=>'Example','dir'=>'/example')
      * @return void
      */
     public static function configure($configuration, $isFile = true, $prefixDir = array()) {
