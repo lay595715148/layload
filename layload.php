@@ -166,7 +166,7 @@ final class Layload {
                                 Debugger::info($tmppath.$suffix, 'REQUIRE_ONCE');
                                 require_once $tmppath.$suffix;
                                 break;
-                            } else if($classpath.$tmppath.$suffix) {
+                            } else if(is_file($classpath.$tmppath.$suffix)) {
                                 Debugger::info($classpath.$tmppath.$suffix, 'REQUIRE_ONCE');
                                 require_once $classpath.$tmppath.$suffix;
                                 break;
