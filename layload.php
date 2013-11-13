@@ -5,10 +5,10 @@
 global $_LOADPATH, $_CLASSPATH;
 
 /**
- * default loadpath and classpath
+ * loadpath and classpath default is empty
  */
-$_LOADPATH = str_replace("\\", "/", __DIR__);
-$_CLASSPATH = str_replace("\\", "/", __DIR__);
+//$_LOADPATH = str_replace("\\", "/", __DIR__);
+//$_CLASSPATH = str_replace("\\", "/", __DIR__);
 
 /**
  * Layload autoload class
