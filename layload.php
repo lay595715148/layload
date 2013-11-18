@@ -64,7 +64,8 @@ final class Layload {
         } else if(is_string($classpath) && $classpath) {
             $paths = explode(';', $classpath);
             foreach($paths as $path) {
-                Layload::classpath($path, $append);
+                if(is_dir($path))
+                    Layload::classpath($path, $append);
             }
         } else if(is_array($classpath) && ! empty($classpath)) {
             foreach($classpath as $path) {
@@ -113,7 +114,7 @@ final class Layload {
             }
             if(! class_exists($classname) && ! interface_exists($classname)) {
                 // TODO warning no class mapping by layload class autoload function
-                Debugger::warn($classname . ':no class mapping by layload class autoload function', 'CLASS_AUTOLOAD');
+                Debugger::warn($classname . ':class no found by layload class autoload function', 'CLASS_AUTOLOAD');
             }
         }
     }
