@@ -219,7 +219,7 @@ final class Layload {
                     foreach($matches[1] as $index => $item) {
                         $path .= '/' . $item;
                         $lowerpath .= '/' . strtolower($item);
-                        if($isdir = is_dir($path) || is_dir($lowerpath)) { // 顺序文件夹查找
+                        if(($isdir = is_dir($path)) || is_dir($lowerpath)) { // 顺序文件夹查找
                             $tmppath = (($isdir)?$path:$lowerpath) . '/' . $classname;
                             Debugger::debug('tmpapth:'.$tmppath);
                             foreach($suffixes as $i => $suffix) {
@@ -232,7 +232,7 @@ final class Layload {
                             continue;
                         } else if($index == count($matches[1]) - 1) {
                             foreach($suffixes as $i => $suffix) {
-                                if($isfile = is_file($path . $suffix) || is_file($lowerpath . $suffix)) {
+                                if(($isfile = is_file($path . $suffix)) || is_file($lowerpath . $suffix)) {
                                     Debugger::info((($isfile)?$path:$lowerpath) . $suffix, 'REQUIRE_ONCE');
                                     require_once (($isfile)?$path:$lowerpath) . $suffix;
                                     break 2;
