@@ -213,13 +213,15 @@ final class Layload {
                         }
                     }
                 }
-                // 如果以上没有匹配，则递归文件夹查找
+                // 如果以上没有匹配，则使用类名递归文件夹查找，如使用小写请保持（如果第一递归文件夹使用了小写，即之后的文件夹名称保持小写）
                 if(! class_exists($classname) && ! interface_exists($classname)) {
-                    $path = $classpath;
+                    $path = $lowerpath = $classpath;Debugger::debug($classpath);
                     foreach($matches[1] as $index => $item) {
                         $path .= '/' . $item;
-                        if(is_dir($path)) { // 顺序文件夹查找
-                            $tmppath = $path . '/' . substr($classname, strpos($classname, $item) + strlen($item));
+                        $lowerpath .= '/' . strtolower($item);
+                        if($isdir = is_dir($path) || is_dir($lowerpath)) { // 顺序文件夹查找
+                            $tmppath = (($isdir)?$path:$lowerpath) . '/' . $classname;
+                            Debugger::debug('tmpapth:'.$tmppath);
                             foreach($suffixes as $i => $suffix) {
                                 if(is_file($tmppath . $suffix)) {
                                     Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
@@ -230,9 +232,9 @@ final class Layload {
                             continue;
                         } else if($index == count($matches[1]) - 1) {
                             foreach($suffixes as $i => $suffix) {
-                                if(is_file($path . $suffix)) {
-                                    Debugger::info($path . $suffix, 'REQUIRE_ONCE');
-                                    require_once $path . $suffix;
+                                if($isfile = is_file($path . $suffix) || is_file($lowerpath . $suffix)) {
+                                    Debugger::info((($isfile)?$path:$lowerpath) . $suffix, 'REQUIRE_ONCE');
+                                    require_once (($isfile)?$path:$lowerpath) . $suffix;
                                     break 2;
                                 }
                             }
