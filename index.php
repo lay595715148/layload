@@ -1,22 +1,25 @@
 <?php
 $st = date('Y-m-d H:i:s').'.'.floor(microtime()*1000);
-include_once './layload.php';
+include_once __DIR__.'/layload.php';
+include_once __DIR__.'/lib/index.php';
 
-L::classpath(__DIR__.'/classes');
-L::configure(array('/config_0.php','/config_1.php','/config_2.php'));
-L::initialize();
+Debugger::initialize(array(true, false));
+Layload::classpath(__DIR__.'/classes');
+Layload::classpath(__DIR__.'/classes/example');
+Layload::configure(array('/config_0.php','/config_1.php','/config_2.php'));
+Layload::initialize();
 
-echo '<pre>';print_r(L::$classes);echo '</pre>';
+Debugger::debug(Layload::$classes);
 $t = new core\Test();
-echo '<pre>';print_r($t);echo '</pre>';
+Debugger::debug($t);
 $t->fun();
 
 $e1 = new DemoMyT();
-echo '<pre>';print_r($e1);echo '</pre>';
+Debugger::debug($e1);
 $e2 = new DemoT();
-echo '<pre>';print_r($e2);echo '</pre>';
+Debugger::debug($e2);
 $e3 = new ServiceMysql();
-echo '<pre>';print_r($e3);echo '</pre>';
+Debugger::debug($e3);
 $et = date('Y-m-d H:i:s').'.'.floor(microtime()*1000);
-echo '<pre>';print_r(array($st,$et));echo '</pre>';
+Debugger::debug(array($st,$et));
 ?>

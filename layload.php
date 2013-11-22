@@ -1,14 +1,16 @@
 <?php
+// 判断Layload是否已经定义
+if(defined('INIT_LAYLOAD')) {
+    return;
+}
+// 定义标记
+define('INIT_LAYLOAD', true);
+
 /**
  * @var global loadpath and classpath
  */
 global $_LOADPATH, $_CLASSPATH;
 
-/**
- * loadpath and classpath default is empty
- */
-//$_LOADPATH = str_replace("\\", "/", __DIR__);
-//$_CLASSPATH = str_replace("\\", "/", __DIR__);
 
 /**
  * Layload autoload class
@@ -217,8 +219,8 @@ final class Layload {
                 if(! class_exists($classname) && ! interface_exists($classname)) {
                     $path = $lowerpath = $classpath;
                     foreach($matches[1] as $index => $item) {
-                        $path .= '/' . $item;
-                        $lowerpath .= '/' . strtolower($item);
+                        $path .= '/' . $item;Debugger::debug('$path     :'.$path);
+                        $lowerpath .= '/' . strtolower($item);Debugger::debug('$lowerpath:'.$lowerpath);
                         if(($isdir = is_dir($path)) || is_dir($lowerpath)) { // 顺序文件夹查找
                             $tmppath = (($isdir)?$path:$lowerpath) . '/' . $classname;
                             foreach($suffixes as $i => $suffix) {
@@ -228,6 +230,7 @@ final class Layload {
                                     break 2;
                                 }
                             }
+                            
                             continue;
                         } else if($index == count($matches[1]) - 1) {
                             foreach($suffixes as $i => $suffix) {
