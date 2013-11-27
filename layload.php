@@ -108,13 +108,13 @@ final class Layload {
             // TODO warning no class autoload path
         } else {
             foreach($paths as $path) {
-                if(class_exists($classname) || interface_exists($classname)) {
+                if(class_exists($classname, false) || interface_exists($classname, false)) {
                     break;
                 } else {
                     Layload::autoloadPerPath($classname, $path);
                 }
             }
-            if(! class_exists($classname) && ! interface_exists($classname)) {
+            if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                 // TODO warning no class mapping by layload class autoload function
                 Debugger::warn($classname . ':class no found by layload class autoload function', 'CLASS_AUTOLOAD');
             }
@@ -146,7 +146,7 @@ final class Layload {
                 // TODO mapping is error
             }
         }
-        if(! class_exists($classname) && ! interface_exists($classname)) {
+        if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
             $tmparr = explode("\\", $classname);
             // if is namespace
             // 通过命名空间查找
@@ -169,7 +169,7 @@ final class Layload {
                     // TODO not found by namespace dir or not found by class basename
                 }
             }
-            if(! class_exists($classname) && ! interface_exists($classname) && preg_match_all('/([A-Z]{1,}[a-z0-9]{0,}|[a-z0-9]{1,})_{0,1}/', $classname, $matches) > 0) {
+            if(! class_exists($classname, false) && ! interface_exists($classname, false) && preg_match_all('/([A-Z]{1,}[a-z0-9]{0,}|[a-z0-9]{1,})_{0,1}/', $classname, $matches) > 0) {
                 // TODO autoload class by regular
                 $tmparr = array_values($matches[1]);
                 $prefix = array_shift($tmparr);
@@ -196,13 +196,13 @@ final class Layload {
                                 // TODO not found by prefix-dir directly
                             }
                         }
-                        if(! class_exists($classname) && ! interface_exists($classname)) {
+                        if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                             // TODO mapping is error by regular match
                         }
                     }
                 }
                 // 如果正则匹配前缀没有找到
-                if(! class_exists($classname) && ! interface_exists($classname)) {
+                if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                     // 直接以类名作为文件名查找
                     foreach($suffixes as $i => $suffix) {
                         $tmppath = $classpath . '/' . $classname;
@@ -216,11 +216,11 @@ final class Layload {
                     }
                 }
                 // 如果以上没有匹配，则使用类名递归文件夹查找，如使用小写请保持（如果第一递归文件夹使用了小写，即之后的文件夹名称保持小写）
-                if(! class_exists($classname) && ! interface_exists($classname)) {
+                if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                     $path = $lowerpath = $classpath;
                     foreach($matches[1] as $index => $item) {
-                        $path .= '/' . $item;Debugger::debug('$path     :'.$path);
-                        $lowerpath .= '/' . strtolower($item);Debugger::debug('$lowerpath:'.$lowerpath);
+                        $path .= '/' . $item;//Debugger::debug('$path     :'.$path);
+                        $lowerpath .= '/' . strtolower($item);//Debugger::debug('$lowerpath:'.$lowerpath);
                         if(($isdir = is_dir($path)) || is_dir($lowerpath)) { // 顺序文件夹查找
                             $tmppath = (($isdir)?$path:$lowerpath) . '/' . $classname;
                             foreach($suffixes as $i => $suffix) {
