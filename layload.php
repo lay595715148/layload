@@ -7,10 +7,10 @@ if(defined('INIT_LAYLOAD')) {
 define('INIT_LAYLOAD', true);
 
 /**
+ *
  * @var global loadpath and classpath
  */
 global $_LOADPATH, $_CLASSPATH;
-
 
 /**
  * Layload autoload class
@@ -74,7 +74,7 @@ class Layload {
                 Layload::classpath($path, $append);
             }
         } else {
-            Debugger::warn('$classpath isnot a real path string', 'CLASSPATH');
+            Debugger::warn('given $classpath isnot a real path string', 'CONFIGURE');
             // TODO warning given path isnot a real path
         }
     }
@@ -91,6 +91,7 @@ class Layload {
             $_LOADPATH = str_replace("\\", "/", $loadpath);
         } else {
             // TODO warning given path isnot a real path
+            Debugger::warn('given $loadpath isnot a real path', 'CONFIGURE');
         }
     }
     
@@ -106,6 +107,8 @@ class Layload {
         $paths = explode(';', $_CLASSPATH);
         if(empty($paths)) {
             // TODO warning no class autoload path
+            Debugger::warn('no classpath to load by Layload', 'CLASS_AUTOLOAD');
+            self::checkAutoloadFunctions();
         } else {
             foreach($paths as $path) {
                 if(class_exists($classname, false) || interface_exists($classname, false)) {
@@ -116,7 +119,22 @@ class Layload {
             }
             if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                 // TODO warning no class mapping by layload class autoload function
-                Debugger::warn($classname . ':class no found by layload class autoload function', 'CLASS_AUTOLOAD');
+                Debugger::warn($classname . ':class not found by Layload', 'CLASS_AUTOLOAD');
+                self::checkAutoloadFunctions();
+            }
+        }
+    }
+    /**
+     * 判断是否还有其他自动加载函数，如没有则抛出异常
+     * @throws Exception
+     */
+    private static function checkAutoloadFunctions() {
+        // 判断是否还有其他自动加载函数，如没有则抛出异常
+        $funs = spl_autoload_functions();
+        $count = count($funs);
+        foreach($funs as $i => $fun) {
+            if($fun[0] == 'Layload' && $fun[1] == 'autoload' && $count == $i + 1) {
+                throw new Exception('class not found by layload');
             }
         }
     }
@@ -219,10 +237,10 @@ class Layload {
                 if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                     $path = $lowerpath = $classpath;
                     foreach($matches[1] as $index => $item) {
-                        $path .= '/' . $item;//Debugger::debug('$path     :'.$path);
-                        $lowerpath .= '/' . strtolower($item);//Debugger::debug('$lowerpath:'.$lowerpath);
+                        $path .= '/' . $item; // Debugger::debug('$path :'.$path);
+                        $lowerpath .= '/' . strtolower($item); // Debugger::debug('$lowerpath:'.$lowerpath);
                         if(($isdir = is_dir($path)) || is_dir($lowerpath)) { // 顺序文件夹查找
-                            $tmppath = (($isdir)?$path:$lowerpath) . '/' . $classname;
+                            $tmppath = (($isdir) ? $path : $lowerpath) . '/' . $classname;
                             foreach($suffixes as $i => $suffix) {
                                 if(is_file($tmppath . $suffix)) {
                                     Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
@@ -235,8 +253,8 @@ class Layload {
                         } else if($index == count($matches[1]) - 1) {
                             foreach($suffixes as $i => $suffix) {
                                 if(($isfile = is_file($path . $suffix)) || is_file($lowerpath . $suffix)) {
-                                    Debugger::info((($isfile)?$path:$lowerpath) . $suffix, 'REQUIRE_ONCE');
-                                    require_once (($isfile)?$path:$lowerpath) . $suffix;
+                                    Debugger::info((($isfile) ? $path : $lowerpath) . $suffix, 'REQUIRE_ONCE');
+                                    require_once (($isfile) ? $path : $lowerpath) . $suffix;
                                     break 2;
                                 }
                             }
