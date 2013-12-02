@@ -19,7 +19,7 @@ global $_LOADPATH, $_CLASSPATH;
  * @author Lay Li
  * @version 1.0.0 (build 131010)
  */
-final class Layload {
+class Layload {
     /**
      *
      * @staticvar all class mappings
