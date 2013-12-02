@@ -75,7 +75,6 @@ class Layload {
             }
         } else {
             Debugger::warn('given $classpath isnot a real path string', 'CONFIGURE');
-            // TODO warning given path isnot a real path
         }
     }
     /**
@@ -90,7 +89,6 @@ class Layload {
         if(is_dir($loadpath)) {
             $_LOADPATH = str_replace("\\", "/", $loadpath);
         } else {
-            // TODO warning given path isnot a real path
             Debugger::warn('given $loadpath isnot a real path', 'CONFIGURE');
         }
     }
@@ -106,7 +104,6 @@ class Layload {
         global $_CLASSPATH;
         $paths = explode(';', $_CLASSPATH);
         if(empty($paths)) {
-            // TODO warning no class autoload path
             Debugger::warn('no classpath to load by Layload', 'CLASS_AUTOLOAD');
             self::checkAutoloadFunctions();
         } else {
@@ -118,7 +115,6 @@ class Layload {
                 }
             }
             if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
-                // TODO warning no class mapping by layload class autoload function
                 Debugger::warn($classname . ':class not found by Layload', 'CLASS_AUTOLOAD');
                 self::checkAutoloadFunctions();
             }
@@ -126,6 +122,7 @@ class Layload {
     }
     /**
      * 判断是否还有其他自动加载函数，如没有则抛出异常
+     * 
      * @throws Exception
      */
     private static function checkAutoloadFunctions() {
@@ -160,13 +157,10 @@ class Layload {
             } else if(is_file($classpath . $classes[$classname])) {
                 Debugger::info($classpath . $classes[$classname], 'REQUIRE_ONCE');
                 require_once $classpath . $classes[$classname];
-            } else {
-                // TODO mapping is error
             }
         }
         if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
             $tmparr = explode("\\", $classname);
-            // if is namespace
             // 通过命名空间查找
             if(count($tmparr) > 1) {
                 $name = array_pop($tmparr);
@@ -183,12 +177,10 @@ class Layload {
                             break;
                         }
                     }
-                } else {
-                    // TODO not found by namespace dir or not found by class basename
                 }
             }
             if(! class_exists($classname, false) && ! interface_exists($classname, false) && preg_match_all('/([A-Z]{1,}[a-z0-9]{0,}|[a-z0-9]{1,})_{0,1}/', $classname, $matches) > 0) {
-                // TODO autoload class by regular
+                // 正则匹配后进行查找
                 $tmparr = array_values($matches[1]);
                 $prefix = array_shift($tmparr);
                 // 正则匹配前缀查找
@@ -210,12 +202,7 @@ class Layload {
                                 Debugger::info($classpath . $tmppath . $suffix, 'REQUIRE_ONCE');
                                 require_once $classpath . $tmppath . $suffix;
                                 break;
-                            } else {
-                                // TODO not found by prefix-dir directly
                             }
-                        }
-                        if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
-                            // TODO mapping is error by regular match
                         }
                     }
                 }
@@ -228,8 +215,6 @@ class Layload {
                             Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
                             require_once $tmppath . $suffix;
                             break;
-                        } else {
-                            // TODO not found by classname directly
                         }
                     }
                 }
@@ -259,13 +244,9 @@ class Layload {
                                 }
                             }
                             break;
-                        } else {
-                            // TODO not found by regular recursive
                         }
                     }
                 }
-            } else {
-                // TODO not found
             }
         }
     }
@@ -289,16 +270,16 @@ class Layload {
             foreach($configuration as $cls => $path) {
                 if(is_array($prefixDir) && ! empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) {
                     if(array_key_exists($cls, $prefixes[$prefixDir['prefix']])) {
-                        // TODO class mapping exists, give a warning
+                        Debugger::warn('classname exists in classes mapping', 'CONFIGURE');
                     } else if(is_numeric($cls)) {
-                        // TODO numeric class mapping, give a warning
+                        Debugger::warn('nonnumericial classname in classes mapping', 'CONFIGURE');
                     } else {
                         $prefixes[$prefixDir['prefix']][$cls] = $prefixDir['dir'] . $path;
                     }
                 } else if(array_key_exists($cls, $classes)) {
-                    // TODO class mapping exists, give a warning
+                    Debugger::warn('classname exists in classes mapping', 'CONFIGURE');
                 } else if(is_numeric($cls)) {
-                    // TODO numeric class mapping, give a warning
+                    Debugger::warn('nonnumericial classname in classes mapping', 'CONFIGURE');
                 } else {
                     $classes[$cls] = $path;
                 }
@@ -315,13 +296,14 @@ class Layload {
             } else if(is_file($_LOADPATH . $configuration)) {
                 $tmparr = include_once $_LOADPATH . $configuration;
             } else {
+                Debugger::warn('configuration is not a real file path', 'CONFIGURE');
                 $tmparr = array();
             }
             
             if(array_key_exists('classes', $tmparr)) {
                 Layload::configure($tmparr['classes'], false);
             } else {
-                // TODO no class mapping
+                Debugger::warn('no class mapping in configuration file', 'CONFIGURE');
             }
             // 正则匹配前缀
             if(array_key_exists('prefix-dir', $tmparr)) {
@@ -332,24 +314,13 @@ class Layload {
                 if(array_key_exists('classes', $tmparr['prefix-dir'])) {
                     Layload::configure($tmparr['prefix-dir']['classes'], false, $tmparr['prefix-dir']);
                 }
-            } else {
-                // TODO no prefix-dir or class mapping
             }
             if(array_key_exists('files', $tmparr)) {
                 Layload::configure($tmparr['files']);
             } else {
-                // TODO no class config file array
+                Debugger::warn('no files in configuration file', 'CONFIGURE');
             }
         }
     }
-}
-
-if(! class_exists('L', false)) {
-    /**
-     * Layload autoload class
-     *
-     * @author Lay Li
-     */
-    class_alias('Layload', 'L');
 }
 ?>
