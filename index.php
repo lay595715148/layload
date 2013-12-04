@@ -9,7 +9,7 @@ Layload::classpath(__DIR__.'/classes/example');
 Layload::configure(array('/config_0.php','/config_1.php','/config_2.php'));
 Layload::initialize();
 
-Debugger::debug(Layload::$classes);
+//Debugger::debug(Layload::$classes);
 $t = new core\Test();
 Debugger::debug($t);
 $t->fun();

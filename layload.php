@@ -20,14 +20,22 @@ global $_LOADPATH, $_CLASSPATH;
  * @version 1.0.0 (build 131010)
  */
 class Layload {
+    
     /**
      *
-     * @staticvar all class mappings
+     * @var Layload
      */
-    public static $classes = array(
-            '_prefixes' => array()
-    );
-    
+    private static $instance = null;
+    /**
+     *
+     * @return Layload
+     */
+    public static function getInstance() {
+        if(!self::$instance) {
+            self::$instance = new Layload();
+        }
+        return self::$instance;
+    }
     /**
      * initialize autoload function
      *
@@ -111,7 +119,7 @@ class Layload {
                 if(class_exists($classname, false) || interface_exists($classname, false)) {
                     break;
                 } else {
-                    Layload::autoloadPerPath($classname, $path);
+                    self::getInstance()->loadClass($classname, $path);
                 }
             }
             if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
@@ -122,7 +130,7 @@ class Layload {
     }
     /**
      * 判断是否还有其他自动加载函数，如没有则抛出异常
-     * 
+     *
      * @throws Exception
      */
     private static function checkAutoloadFunctions() {
@@ -136,15 +144,53 @@ class Layload {
         }
     }
     /**
+     * configure class mapping,all config file is load in $_LOADPATH
+     *
+     * @param string|array<string> $configuration
+     *            a class mapping file or class mapping file array or class mapping array
+     * @param boolean $isFile
+     *            sign file,default is true
+     * @param array $prefixDir
+     *            class prefix to dir,default is empty,example: array('prefix'=>'Example','dir'=>'/example')
+     * @return void
+     * @deprecated
+     *
+     *
+     */
+    public static function configure($configuration, $isFile = true, $prefixDir = array()) {
+        self::getInstance()->setClassesPath($configuration, $isFile, $prefixDir);
+    }
+    
+    /**
+     * all class mappings
+     *
+     * @var array
+     */
+    private $classes = array();
+    private $caches = array();
+    private $cached = false;
+    /**
+     * 构造方法，同时执行读取缓存
+     */
+    private function __construct() {
+        $this->loadCache();
+    }
+    /**
+     * 析构方法，同时执行更新缓存
+     */
+    public function __destruct() {
+        $this->updateCache();
+    }
+    /**
      * autoload class by classpath
      *
      * @param string $classname            
      * @param string $classpath            
      * @return void
      */
-    private static function autoloadPerPath($classname, $classpath) {
-        $classes = &Layload::$classes;
-        $prefixes = &Layload::$classes['_prefixes'];
+    public function loadClass($classname, $classpath) {
+        $classes = $this->classes;
+        $prefixes = $this->classes['_prefixes'];
         $suffixes = array(
                 '.php',
                 '.class.php'
@@ -172,6 +218,7 @@ class Layload {
                     foreach($suffixes as $i => $suffix) {
                         if(is_file($tmppath . $suffix)) {
                             Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
+                            $this->setCache($classname, $tmppath . $suffix);
                             require_once $tmppath . $suffix;
                             $required = true;
                             break;
@@ -187,19 +234,23 @@ class Layload {
                 if(array_key_exists($prefix, $prefixes)) { // prefix is not good
                     if(is_file($prefixes[$prefix][$classname])) {
                         Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE');
+                        $this->setCache($classname, $prefixes[$prefix][$classname]);
                         require_once $prefixes[$prefix][$classname];
                     } else if(is_file($classpath . $prefixes[$prefix][$classname])) {
                         Debugger::info($classpath . $prefixes[$prefix][$classname], 'REQUIRE_ONCE');
+                        $this->setCache($classname, $classpath . $prefixes[$prefix][$classname]);
                         require_once $classpath . $prefixes[$prefix][$classname];
                     } else {
                         foreach($suffixes as $i => $suffix) {
                             $tmppath = $prefixes[$prefix]['_dir'] . '/' . $classname;
                             if(is_file($tmppath . $suffix)) {
                                 Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
+                                $this->setCache($classname, $tmppath . $suffix);
                                 require_once $tmppath . $suffix;
                                 break;
                             } else if(is_file($classpath . $tmppath . $suffix)) {
                                 Debugger::info($classpath . $tmppath . $suffix, 'REQUIRE_ONCE');
+                                $this->setCache($classname, $classpath . $tmppath . $suffix);
                                 require_once $classpath . $tmppath . $suffix;
                                 break;
                             }
@@ -213,6 +264,7 @@ class Layload {
                         $tmppath = $classpath . '/' . $classname;
                         if(is_file($tmppath . $suffix)) {
                             Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
+                            $this->setCache($classname, $tmppath . $suffix);
                             require_once $tmppath . $suffix;
                             break;
                         }
@@ -229,6 +281,7 @@ class Layload {
                             foreach($suffixes as $i => $suffix) {
                                 if(is_file($tmppath . $suffix)) {
                                     Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
+                                    $this->setCache($classname, $tmppath . $suffix);
                                     require_once $tmppath . $suffix;
                                     break 2;
                                 }
@@ -239,6 +292,7 @@ class Layload {
                             foreach($suffixes as $i => $suffix) {
                                 if(($isfile = is_file($path . $suffix)) || is_file($lowerpath . $suffix)) {
                                     Debugger::info((($isfile) ? $path : $lowerpath) . $suffix, 'REQUIRE_ONCE');
+                                    $this->setCache($classname, (($isfile) ? $path : $lowerpath) . $suffix);
                                     require_once (($isfile) ? $path : $lowerpath) . $suffix;
                                     break 2;
                                 }
@@ -251,7 +305,7 @@ class Layload {
         }
     }
     /**
-     * configure class mapping,all config file is load in $_LOADPATH
+     * set classes mapping,all file is load by $_LOADPATH
      *
      * @param string|array<string> $configuration
      *            a class mapping file or class mapping file array or class mapping array
@@ -260,12 +314,14 @@ class Layload {
      * @param array $prefixDir
      *            class prefix to dir,default is empty,example: array('prefix'=>'Example','dir'=>'/example')
      * @return void
+     * @deprecated
+     *
+     *
      */
-    public static function configure($configuration, $isFile = true, $prefixDir = array()) {
-        global $_CLASSPATH;
+    public function setClassesPath($configuration, $isFile = true, $prefixDir = array()) {
         global $_LOADPATH;
-        $classes = &Layload::$classes;
-        $prefixes = &Layload::$classes['_prefixes'];
+        $classes = &$this->classes;
+        $prefixes = &$this->classes['_prefixes'];
         if(is_array($configuration) && ! $isFile) {
             foreach($configuration as $cls => $path) {
                 if(is_array($prefixDir) && ! empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) {
@@ -287,7 +343,7 @@ class Layload {
         } else if(is_array($configuration)) {
             if(! empty($configuration)) {
                 foreach($configuration as $index => $configfile) {
-                    Layload::configure($configfile);
+                    $this->setClassesPath($configfile);
                 }
             }
         } else {
@@ -301,7 +357,7 @@ class Layload {
             }
             
             if(array_key_exists('classes', $tmparr)) {
-                Layload::configure($tmparr['classes'], false);
+                $this->setClassesPath($tmparr['classes'], false);
             } else {
                 Debugger::warn('no class mapping in configuration file', 'CONFIGURE');
             }
@@ -312,15 +368,202 @@ class Layload {
                     $prefixes[$prefix]['_dir'] = $tmparr['prefix-dir']['dir'];
                 }
                 if(array_key_exists('classes', $tmparr['prefix-dir'])) {
-                    Layload::configure($tmparr['prefix-dir']['classes'], false, $tmparr['prefix-dir']);
+                    $this->setClassesPath($tmparr['prefix-dir']['classes'], false, $tmparr['prefix-dir']);
                 }
             }
             if(array_key_exists('files', $tmparr)) {
-                Layload::configure($tmparr['files']);
+                $this->setClassesPath($tmparr['files']);
             } else {
                 Debugger::warn('no files in configuration file', 'CONFIGURE');
             }
         }
+    }
+    public function getClassPath($classname) {
+        if(isset($this->classes[$classname])) {
+            return $this->classes[$classname];
+        } else {
+            return false;
+        }
+    }
+    public function getClassesPath() {
+        return $this->classes;
+    }
+    private function loadCache() {
+        $cachename = __DIR__ . '/cache/classes.php';
+        if(is_file($cachename)) {
+            $this->caches = include $cachename;
+        } else {
+            $this->caches = array();
+        }
+        if(is_array($this->caches) && ! empty($this->caches)) {
+            $this->classes = array_merge($this->classes, $this->caches);
+        }
+    }
+    /**
+     * 更新缓存的类文件映射
+     * @return number
+     */
+    private function updateCache() {
+        if($this->cached) {
+            $content = self::array2PHPContent($this->caches);
+            $cachename = __DIR__ . '/cache/classes.php';
+            $handle = fopen($cachename, 'w');
+            $result = fwrite($handle, $content);
+            $return = fflush($handle);
+            $return = fclose($handle);
+            return $result;
+        } else {
+            return 0;
+        }
+    }
+    /**
+     * 将类文件映射缓存起来
+     *
+     * @param string $classname            
+     * @param string $filepath            
+     * @return void
+     */
+    private function setCache($classname, $filepath) {
+        // TODO to implement
+        $this->cached = true;
+        $this->caches[$classname] = $filepath;
+    }
+    /**
+     * 获取缓存起来的类文件映射
+     *
+     * @return array string
+     */
+    public function getCache($classname = '') {
+        // TODO to implement
+        if(is_string($classname) && $classname && isset($this->caches[$classname])) {
+            return $this->caches[$classname];
+        } else {
+            return $this->caches;
+        }
+    }
+    /**
+     * php array to php content
+     *
+     * @param array $arr
+     *            convert array
+     * @param boolean $encrypt
+     *            if encrypt
+     * @return string
+     */
+    public static function array2PHPContent($arr, $encrypt = false) {
+        if($encrypt) {
+            $r = '';
+            $r .= self::array2String($arr);
+        } else {
+            $r = '<?php return ';
+            self::a2s($r, $arr);
+            $r .= ';?>';
+        }
+        return $r;
+    }
+    /**
+     * convert a multidimensional array to url save and encoded string
+     *
+     * 在Array和String类型之间转换，转换为字符串的数组可以直接在URL上传递
+     *
+     * @param array $Array
+     *            convert array
+     */
+    public static function array2String($Array) {
+        $Return = '';
+        $NullValue = "^^^";
+        foreach($Array as $Key => $Value) {
+            if(is_array($Value))
+                $ReturnValue = '^^array^' . self::array2String($Value);
+            else
+                $ReturnValue = (strlen($Value) > 0) ? $Value : $NullValue;
+            $Return .= urlencode(base64_encode($Key)) . '|' . urlencode(base64_encode($ReturnValue)) . '||';
+        }
+        return urlencode(substr($Return, 0, - 2));
+    }
+    /**
+     * convert a string generated with Array2String() back to the original (multidimensional) array
+     *
+     * @param string $String
+     *            convert string
+     */
+    public static function string2Array($String) {
+        $Return = array();
+        $String = urldecode($String);
+        $TempArray = explode('||', $String);
+        $NullValue = urlencode(base64_encode("^^^"));
+        foreach($TempArray as $TempValue) {
+            list($Key, $Value) = explode('|', $TempValue);
+            $DecodedKey = base64_decode(urldecode($Key));
+            if($Value != $NullValue) {
+                $ReturnValue = base64_decode(urldecode($Value));
+                if(substr($ReturnValue, 0, 8) == '^^array^')
+                    $ReturnValue = self::string2Array(substr($ReturnValue, 8));
+                $Return[$DecodedKey] = $ReturnValue;
+            } else
+                $Return[$DecodedKey] = NULL;
+        }
+        return $Return;
+    }
+    /**
+     * array $a to string $r
+     *
+     * @param string $r
+     *            output string pointer address
+     * @param array $a
+     *            input array pointer address
+     * @return void
+     */
+    public static function a2s(&$r, array &$a, $l = "", $b = "    ") {
+        $f = false;
+        $h = false;
+        $i = 0;
+        $r .= 'array(' . "\n";
+        foreach($a as $k => $v) {
+            if(!$h)
+                $h = array('k'=>$k, 'v'=>$v);
+            if($f)
+                $r .= ',' . "\n";
+            $j = !is_string($k) && is_numeric($k) && $h['k'] === 0;
+            self::o2s($r, $k, $v, $i, $j, $l, $b);
+            $f = true;
+            if($j && $k >= $i)
+                $i = $k + 1;
+        }
+        $r .= "\n$l".')';
+    }
+    /**
+     * to string $r
+     *
+     * @param string $r
+     *            output string pointer address
+     * @param string $k
+     * @param string $v
+     * @param string $i
+     * @param string $j
+     * @return void
+     */
+    private static function o2s(&$r, $k, $v, $i, $j, $l, $b) {
+        if($k !== $i) {
+            if($j)
+                $r .= "$l$b$k => ";
+            else
+                $r .= "$l$b'$k' => ";
+        } else {
+            $r .= "$l$b";
+        }
+        if(is_array($v))
+            self::a2s($r, $v, $l.$b);
+        else if(is_numeric($v))
+            $r .= "".$v;
+        else
+            $r .= "'" . str_replace(array(
+                    "\\",
+                    "'"
+            ), array(
+                    "\\\\",
+                    "\'"
+            ), $v) . "'";
     }
 }
 ?>
