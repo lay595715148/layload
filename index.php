@@ -6,7 +6,7 @@ include_once __DIR__.'/lib/index.php';
 Debugger::initialize(array(true, false));
 Layload::classpath(__DIR__.'/classes');
 Layload::classpath(__DIR__.'/classes/example');
-Layload::configure(array('/config_0.php','/config_1.php','/config_2.php'));
+//Layload::configure(array('/config_0.php','/config_1.php','/config_2.php'));
 Layload::initialize();
 
 //Debugger::debug(Layload::$classes);

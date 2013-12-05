@@ -7,12 +7,6 @@ if(defined('INIT_LAYLOAD')) {
 define('INIT_LAYLOAD', true);
 
 /**
- *
- * @var global loadpath and classpath
- */
-global $_LOADPATH, $_CLASSPATH;
-
-/**
  * Layload autoload class
  * 加载优先级：类全名映射->命名空间文件夹查找->纯类名映射->正则匹配前缀类全名映射查找->正则匹配文件夹顺序查找
  *
@@ -20,7 +14,16 @@ global $_LOADPATH, $_CLASSPATH;
  * @version 1.0.0 (build 131010)
  */
 class Layload {
-    
+    /**
+     * global classpath
+     * @var string
+     */
+    public static $_CLASSPATH;
+    /**
+     * global class config load path
+     * @var string
+     */
+    public static $_LOADPATH;
     /**
      *
      * @var Layload
@@ -60,7 +63,7 @@ class Layload {
      * @return void
      */
     public static function classpath($classpath = '', $append = true) {
-        global $_CLASSPATH;
+        $_CLASSPATH = &self::$_CLASSPATH;
         if(is_dir($classpath)) {
             $classpath = str_replace("\\", "/", $classpath);
             if(! $append || ! $_CLASSPATH) {
@@ -93,7 +96,7 @@ class Layload {
      * @return void
      */
     public static function loadpath($loadpath = '') {
-        global $_LOADPATH;
+        $_LOADPATH = &self::$_LOADPATH;
         if(is_dir($loadpath)) {
             $_LOADPATH = str_replace("\\", "/", $loadpath);
         } else {
@@ -109,7 +112,7 @@ class Layload {
      * @return void
      */
     public static function autoload($classname) {
-        global $_CLASSPATH;
+        $_CLASSPATH = &self::$_CLASSPATH;
         $paths = explode(';', $_CLASSPATH);
         if(empty($paths)) {
             Debugger::warn('no classpath to load by Layload', 'CLASS_AUTOLOAD');
@@ -190,7 +193,8 @@ class Layload {
      */
     public function loadClass($classname, $classpath) {
         $classes = $this->classes;
-        $prefixes = $this->classes['_prefixes'];
+        //去除使用prefix功能
+        //$prefixes = is_array($this->classes['_prefixes'])?$this->classes['_prefixes']:array();
         $suffixes = array(
                 '.php',
                 '.class.php'
@@ -230,8 +234,8 @@ class Layload {
                 // 正则匹配后进行查找
                 $tmparr = array_values($matches[1]);
                 $prefix = array_shift($tmparr);
-                // 正则匹配前缀查找
-                if(array_key_exists($prefix, $prefixes)) { // prefix is not good
+                // 正则匹配前缀查找 //去除使用prefix功能
+                /*if(array_key_exists($prefix, $prefixes)) { // prefix is not good
                     if(is_file($prefixes[$prefix][$classname])) {
                         Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE');
                         $this->setCache($classname, $prefixes[$prefix][$classname]);
@@ -256,7 +260,7 @@ class Layload {
                             }
                         }
                     }
-                }
+                }*/
                 // 如果正则匹配前缀没有找到
                 if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                     // 直接以类名作为文件名查找
@@ -319,12 +323,14 @@ class Layload {
      *
      */
     public function setClassesPath($configuration, $isFile = true, $prefixDir = array()) {
-        global $_LOADPATH;
+        $_LOADPATH = &self::$_LOADPATH;
         $classes = &$this->classes;
-        $prefixes = &$this->classes['_prefixes'];
+        //去除使用prefix功能
+        //$prefixes = &$this->classes['_prefixes'];
         if(is_array($configuration) && ! $isFile) {
             foreach($configuration as $cls => $path) {
-                if(is_array($prefixDir) && ! empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) {
+                //去除使用prefix功能
+                /*if(is_array($prefixDir) && ! empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) {
                     if(array_key_exists($cls, $prefixes[$prefixDir['prefix']])) {
                         Debugger::warn('classname exists in classes mapping', 'CONFIGURE');
                     } else if(is_numeric($cls)) {
@@ -332,7 +338,8 @@ class Layload {
                     } else {
                         $prefixes[$prefixDir['prefix']][$cls] = $prefixDir['dir'] . $path;
                     }
-                } else if(array_key_exists($cls, $classes)) {
+                } else */
+                if(array_key_exists($cls, $classes)) {
                     Debugger::warn('classname exists in classes mapping', 'CONFIGURE');
                 } else if(is_numeric($cls)) {
                     Debugger::warn('nonnumericial classname in classes mapping', 'CONFIGURE');
@@ -362,7 +369,8 @@ class Layload {
                 Debugger::warn('no class mapping in configuration file', 'CONFIGURE');
             }
             // 正则匹配前缀
-            if(array_key_exists('prefix-dir', $tmparr)) {
+            //去除使用prefix功能
+            /*if(array_key_exists('prefix-dir', $tmparr)) {
                 if($tmparr['prefix-dir']['prefix'] && $tmparr['prefix-dir']['dir']) {
                     $prefix = $tmparr['prefix-dir']['prefix'];
                     $prefixes[$prefix]['_dir'] = $tmparr['prefix-dir']['dir'];
@@ -370,7 +378,7 @@ class Layload {
                 if(array_key_exists('classes', $tmparr['prefix-dir'])) {
                     $this->setClassesPath($tmparr['prefix-dir']['classes'], false, $tmparr['prefix-dir']);
                 }
-            }
+            }*/
             if(array_key_exists('files', $tmparr)) {
                 $this->setClassesPath($tmparr['files']);
             } else {
