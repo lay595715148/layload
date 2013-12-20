@@ -16,11 +16,13 @@ define('INIT_LAYLOAD', true);
 class Layload {
     /**
      * global classpath
+     *
      * @var string
      */
     public static $_CLASSPATH;
     /**
      * global class config load path
+     *
      * @var string
      */
     public static $_LOADPATH;
@@ -34,7 +36,7 @@ class Layload {
      * @return Layload
      */
     public static function getInstance() {
-        if(!self::$instance) {
+        if(! self::$instance) {
             self::$instance = new Layload();
         }
         return self::$instance;
@@ -159,6 +161,8 @@ class Layload {
      * @deprecated
      *
      *
+     *
+     *
      */
     public static function configure($configuration, $isFile = true, $prefixDir = array()) {
         self::getInstance()->setClassesPath($configuration, $isFile, $prefixDir);
@@ -193,8 +197,8 @@ class Layload {
      */
     public function loadClass($classname, $classpath) {
         $classes = $this->classes;
-        //去除使用prefix功能
-        //$prefixes = is_array($this->classes['_prefixes'])?$this->classes['_prefixes']:array();
+        // 去除使用prefix功能
+        // $prefixes = is_array($this->classes['_prefixes'])?$this->classes['_prefixes']:array();
         $suffixes = array(
                 '.php',
                 '.class.php'
@@ -235,32 +239,9 @@ class Layload {
                 $tmparr = array_values($matches[1]);
                 $prefix = array_shift($tmparr);
                 // 正则匹配前缀查找 //去除使用prefix功能
-                /*if(array_key_exists($prefix, $prefixes)) { // prefix is not good
-                    if(is_file($prefixes[$prefix][$classname])) {
-                        Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE');
-                        $this->setCache($classname, $prefixes[$prefix][$classname]);
-                        require_once $prefixes[$prefix][$classname];
-                    } else if(is_file($classpath . $prefixes[$prefix][$classname])) {
-                        Debugger::info($classpath . $prefixes[$prefix][$classname], 'REQUIRE_ONCE');
-                        $this->setCache($classname, $classpath . $prefixes[$prefix][$classname]);
-                        require_once $classpath . $prefixes[$prefix][$classname];
-                    } else {
-                        foreach($suffixes as $i => $suffix) {
-                            $tmppath = $prefixes[$prefix]['_dir'] . '/' . $classname;
-                            if(is_file($tmppath . $suffix)) {
-                                Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE');
-                                $this->setCache($classname, $tmppath . $suffix);
-                                require_once $tmppath . $suffix;
-                                break;
-                            } else if(is_file($classpath . $tmppath . $suffix)) {
-                                Debugger::info($classpath . $tmppath . $suffix, 'REQUIRE_ONCE');
-                                $this->setCache($classname, $classpath . $tmppath . $suffix);
-                                require_once $classpath . $tmppath . $suffix;
-                                break;
-                            }
-                        }
-                    }
-                }*/
+                /*
+                 * if(array_key_exists($prefix, $prefixes)) { // prefix is not good if(is_file($prefixes[$prefix][$classname])) { Debugger::info($prefixes[$prefix][$classname], 'REQUIRE_ONCE'); $this->setCache($classname, $prefixes[$prefix][$classname]); require_once $prefixes[$prefix][$classname]; } else if(is_file($classpath . $prefixes[$prefix][$classname])) { Debugger::info($classpath . $prefixes[$prefix][$classname], 'REQUIRE_ONCE'); $this->setCache($classname, $classpath . $prefixes[$prefix][$classname]); require_once $classpath . $prefixes[$prefix][$classname]; } else { foreach($suffixes as $i => $suffix) { $tmppath = $prefixes[$prefix]['_dir'] . '/' . $classname; if(is_file($tmppath . $suffix)) { Debugger::info($tmppath . $suffix, 'REQUIRE_ONCE'); $this->setCache($classname, $tmppath . $suffix); require_once $tmppath . $suffix; break; } else if(is_file($classpath . $tmppath . $suffix)) { Debugger::info($classpath . $tmppath . $suffix, 'REQUIRE_ONCE'); $this->setCache($classname, $classpath . $tmppath . $suffix); require_once $classpath . $tmppath . $suffix; break; } } } }
+                 */
                 // 如果正则匹配前缀没有找到
                 if(! class_exists($classname, false) && ! interface_exists($classname, false)) {
                     // 直接以类名作为文件名查找
@@ -321,24 +302,20 @@ class Layload {
      * @deprecated
      *
      *
+     *
+     *
      */
     public function setClassesPath($configuration, $isFile = true, $prefixDir = array()) {
         $_LOADPATH = &self::$_LOADPATH;
         $classes = &$this->classes;
-        //去除使用prefix功能
-        //$prefixes = &$this->classes['_prefixes'];
+        // 去除使用prefix功能
+        // $prefixes = &$this->classes['_prefixes'];
         if(is_array($configuration) && ! $isFile) {
             foreach($configuration as $cls => $path) {
-                //去除使用prefix功能
-                /*if(is_array($prefixDir) && ! empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) {
-                    if(array_key_exists($cls, $prefixes[$prefixDir['prefix']])) {
-                        Debugger::warn('classname exists in classes mapping', 'CONFIGURE');
-                    } else if(is_numeric($cls)) {
-                        Debugger::warn('nonnumericial classname in classes mapping', 'CONFIGURE');
-                    } else {
-                        $prefixes[$prefixDir['prefix']][$cls] = $prefixDir['dir'] . $path;
-                    }
-                } else */
+                // 去除使用prefix功能
+                /*
+                 * if(is_array($prefixDir) && ! empty($prefixDir) && $prefixDir['dir'] && $prefixDir['prefix']) { if(array_key_exists($cls, $prefixes[$prefixDir['prefix']])) { Debugger::warn('classname exists in classes mapping', 'CONFIGURE'); } else if(is_numeric($cls)) { Debugger::warn('nonnumericial classname in classes mapping', 'CONFIGURE'); } else { $prefixes[$prefixDir['prefix']][$cls] = $prefixDir['dir'] . $path; } } else
+                 */
                 if(array_key_exists($cls, $classes)) {
                     Debugger::warn('classname exists in classes mapping', 'CONFIGURE');
                 } else if(is_numeric($cls)) {
@@ -369,16 +346,10 @@ class Layload {
                 Debugger::warn('no class mapping in configuration file', 'CONFIGURE');
             }
             // 正则匹配前缀
-            //去除使用prefix功能
-            /*if(array_key_exists('prefix-dir', $tmparr)) {
-                if($tmparr['prefix-dir']['prefix'] && $tmparr['prefix-dir']['dir']) {
-                    $prefix = $tmparr['prefix-dir']['prefix'];
-                    $prefixes[$prefix]['_dir'] = $tmparr['prefix-dir']['dir'];
-                }
-                if(array_key_exists('classes', $tmparr['prefix-dir'])) {
-                    $this->setClassesPath($tmparr['prefix-dir']['classes'], false, $tmparr['prefix-dir']);
-                }
-            }*/
+            // 去除使用prefix功能
+            /*
+             * if(array_key_exists('prefix-dir', $tmparr)) { if($tmparr['prefix-dir']['prefix'] && $tmparr['prefix-dir']['dir']) { $prefix = $tmparr['prefix-dir']['prefix']; $prefixes[$prefix]['_dir'] = $tmparr['prefix-dir']['dir']; } if(array_key_exists('classes', $tmparr['prefix-dir'])) { $this->setClassesPath($tmparr['prefix-dir']['classes'], false, $tmparr['prefix-dir']); } }
+             */
             if(array_key_exists('files', $tmparr)) {
                 $this->setClassesPath($tmparr['files']);
             } else {
@@ -409,16 +380,20 @@ class Layload {
     }
     /**
      * 更新缓存的类文件映射
+     *
      * @return number
      */
     private function updateCache() {
         if($this->cached) {
+            if(! is_dir(__DIR__ . '/cache'))
+                mkdir(__DIR__ . '/cache');
             $content = self::array2PHPContent($this->caches);
             $cachename = __DIR__ . '/cache/classes.php';
             $handle = fopen($cachename, 'w');
             $result = fwrite($handle, $content);
             $return = fflush($handle);
             $return = fclose($handle);
+            $this->cached = false;
             return $result;
         } else {
             return 0;
@@ -463,9 +438,9 @@ class Layload {
             $r = '';
             $r .= self::array2String($arr);
         } else {
-            $r = '<?php return ';
+            $r = "<?php return ";
             self::a2s($r, $arr);
-            $r .= ';?>';
+            $r .= ";?>\n";
         }
         return $r;
     }
@@ -508,8 +483,9 @@ class Layload {
                 if(substr($ReturnValue, 0, 8) == '^^array^')
                     $ReturnValue = self::string2Array(substr($ReturnValue, 8));
                 $Return[$DecodedKey] = $ReturnValue;
-            } else
+            } else {
                 $Return[$DecodedKey] = NULL;
+            }
         }
         return $Return;
     }
@@ -528,27 +504,30 @@ class Layload {
         $i = 0;
         $r .= 'array(' . "\n";
         foreach($a as $k => $v) {
-            if(!$h)
-                $h = array('k'=>$k, 'v'=>$v);
+            if(! $h)
+                $h = array(
+                        'k' => $k,
+                        'v' => $v
+                );
             if($f)
                 $r .= ',' . "\n";
-            $j = !is_string($k) && is_numeric($k) && $h['k'] === 0;
+            $j = ! is_string($k) && is_numeric($k) && $h['k'] === 0;
             self::o2s($r, $k, $v, $i, $j, $l, $b);
             $f = true;
             if($j && $k >= $i)
                 $i = $k + 1;
         }
-        $r .= "\n$l".')';
+        $r .= "\n$l" . ')';
     }
     /**
      * to string $r
      *
      * @param string $r
      *            output string pointer address
-     * @param string $k
-     * @param string $v
-     * @param string $i
-     * @param string $j
+     * @param string $k            
+     * @param string $v            
+     * @param string $i            
+     * @param string $j            
      * @return void
      */
     private static function o2s(&$r, $k, $v, $i, $j, $l, $b) {
@@ -561,9 +540,9 @@ class Layload {
             $r .= "$l$b";
         }
         if(is_array($v))
-            self::a2s($r, $v, $l.$b);
+            self::a2s($r, $v, $l . $b);
         else if(is_numeric($v))
-            $r .= "".$v;
+            $r .= "" . $v;
         else
             $r .= "'" . str_replace(array(
                     "\\",
